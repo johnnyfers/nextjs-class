@@ -1,26 +1,37 @@
 import MeetupList from '../components/meetups/MeetupList'
-const dummyMeetups = [
-    {
-        id: 'm1',
-        title: 'A first Meetup',
-        image: 'https://mamalovesrome.com/wp-content/uploads/2021/05/Vatican-City-St-Peter-basilica-DP.jpg',
-        address: 'some address',
-        description: 'my description'
-    },
-    {
-        id: 'm2',
-        title: 'A first Meetup',
-        image: 'https://mamalovesrome.com/wp-content/uploads/2021/05/Vatican-City-St-Peter-basilica-DP.jpg',
-        address: 'some address',
-        description: 'my description'
-    }
-]
+
+import { MongoClient } from 'mongodb'
 
 export default function HomePage(props) {
 
-    return(
-            <MeetupList meetups={props.meetups}/>
+    return (
+        <MeetupList meetups={props.meetups} />
     )
+}
+
+export async function getStaticProps() {
+
+    const client = await MongoClient.connect('mongodb+srv://userlogin:userlogin@cluster0000.h0feh.mongodb.net/meetups?retryWrites=true&w=majority')
+
+    const db = client.db();
+
+    const meetupsCollection = db.collection('meetups')
+
+    const meetups = await meetupsCollection.find().toArray()
+
+    client.close()
+
+    return {
+        props: {
+            meetups: meetups.map(meetup => ({
+                title: meetup.title,
+                address: meetup.address,
+                image: meetup.image,
+                id: meetup._id.toString()
+            }))
+        },
+        revalidate: 1
+    }
 }
 
 /* export async function getServerSideProps(){
@@ -31,12 +42,3 @@ export default function HomePage(props) {
     }
 }
  */
-
-export async function getStaticProps(){
-    return {
-        props: {
-            meetups: dummyMeetups
-        },
-        revalidate: 1
-    }
-}
